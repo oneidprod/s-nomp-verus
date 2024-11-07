@@ -50,7 +50,7 @@
         "pm2": "^3.2.2",
         "redis": "^2.8.0",
         "request": "^2.88.0",
-        "stratum-pool": "git+https://github.com/VerusCoin/node-stratum-pool.git"
+        "stratum-pool": "git+https://github.com/oneidprod/node-stratum-pool.git"
     },
     "engines": {
         "node": ">=8.11"
