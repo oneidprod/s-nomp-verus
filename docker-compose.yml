@@ -6,19 +6,24 @@ services:
       context: .
     working_dir: /site
     ports:
-      - 80
+      - "8080:8080"
+      - "9999:9999"
     volumes:
       - ./:/site
-      - ../.zsh_history:/root/.zsh_history
+      - /site/node_modules
     ulimits:
       nofile:
         soft: 999999
         hard: 999999
-    command: ["pm2-runtime", "start", "ecosystem.config.js", "--only", "site"]
+    depends_on:
+      - redis
 
   redis:
     image: redis:latest
     volumes:
-      - ../.redis:/data
+      - redis-data:/data
+
+volumes:
+  redis-data:
 
 # vim:set ts=2 sw=2 smarttab:

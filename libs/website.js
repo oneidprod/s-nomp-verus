@@ -98,19 +98,23 @@ module.exports = function(logger){
 
     // if an html file was changed reload it
     /* requires node-watch 0.5.0 or newer */
-    watch(['./website', './website/pages'], function(evt, filename){
-        var basename;
-        // support older versions of node-watch automatically
-        if (!filename && evt)
-            basename = path.basename(evt);
-        else
-            basename = path.basename(filename);
-        
-        if (basename in pageFiles){
-            readPageFiles([basename]);
-            logger.special(logSystem, 'Server', 'Reloaded file ' + basename);
-        }
-    });
+    try {
+        watch(['./website', './website/pages'], { recursive: false }, function(evt, filename){
+            var basename;
+            // support older versions of node-watch automatically
+            if (!filename && evt)
+                basename = path.basename(evt);
+            else
+                basename = path.basename(filename);
+
+            if (basename in pageFiles){
+                readPageFiles([basename]);
+                logger.special(logSystem, 'Server', 'Reloaded file ' + basename);
+            }
+        });
+    } catch(e) {
+        logger.warning(logSystem, 'Server', 'File watching unavailable: ' + e.message);
+    }
 
     portalStats.getGlobalStats(function(){
         readPageFiles(Object.keys(pageFiles));
@@ -134,7 +138,7 @@ module.exports = function(logger){
     var buildKeyScriptPage = function(){
         async.waterfall([
             function(callback){
-                var client = CreateRedisClient(portalConfig);
+                var client = CreateRedisClient(portalConfig.redis);
                 if (portalConfig.redis.password) {
                     client.auth(portalConfig.redis.password);
                 }
