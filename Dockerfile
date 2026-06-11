@@ -1,13 +1,15 @@
-FROM keymetrics/pm2:8-stretch
+FROM node:18-bullseye
 
 RUN apt-get -yqq update && \
-    apt-get -yqq upgrade && \
     apt-get -yqq install libboost-all-dev libsodium-dev
 
-RUN apt-get -yqq install vim git zsh tmux silversearcher-ag && \
-    curl -Lo- http://bit.ly/2pztvLf | bash
+RUN npm install -g pm2
 
-ENV SHELL /bin/zsh
-ENV NPM_CONFIG_LOGLEVEL warn
+WORKDIR /site
+
+COPY package.json ./
+
+ARG CACHEBUST=1
+RUN npm install
 
 CMD ["pm2-runtime", "start", "ecosystem.config.js", "--only", "site"]
