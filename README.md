@@ -1,4 +1,36 @@
-# s-nomp: Some New Open Mining Portal
+# s-nomp: Some New Open Mining Portal (Verus / PBaaS Fork)
+
+## Verus / Node 18 / PBaaS Fork (oneidprod)
+
+This fork runs s-nomp-verus under **Node.js 18** with full **PBaaS merge mining** support for Verus (VRSC + vARRR + VDEX + CHIPS).
+
+### What's different
+
+- **Node 18 + Docker**: Runs under `node:18-bullseye` via Docker Compose. Native addons (`equihashverify`, `verushash-node`) patched for the modern V8 API and C++17.
+- **PBaaS merge mining**: Automatically calls `addmergedblock` on the VRSC daemon for each configured PBaaS chain on every new block. Polls each chain on a 10-second timer and retries with `nextblocktime` when returned.
+- **Redis in Docker**: Redis runs as a sidecar container; no host Redis required.
+- **Website fixes**: `CreateRedisClient` bug fixed; `node-watch` recursive watch error handled gracefully on Linux.
+
+### Quick start (Docker)
+
+```bash
+git clone https://github.com/oneidprod/s-nomp-verus
+cd s-nomp-verus
+# edit config.json and pool_configs/vrsc.json
+docker compose up --build -d
+```
+
+### PBaaS chain config (`pool_configs/vrsc.json`)
+
+```json
+"pbaasChains": [
+    { "name": "vARRR", "host": "...", "port": 20778, "user": "...", "password": "..." },
+    { "name": "VDEX",  "host": "...", "port": 21778, "user": "...", "password": "..." },
+    { "name": "CHIPS", "host": "...", "port": 22778, "user": "...", "password": "..." }
+]
+```
+
+---
 
 > *NOTE*:
 > We're working on putting together an "official" s-nomp which can be supported by many coins and pools instead of so many running their own flavors. More to come!
@@ -146,3 +178,18 @@ Credits
 License
 -------
 Released under the MIT License. See LICENSE file.
+
+---
+
+## Donate
+
+If you find this useful, tips are appreciated:
+
+| Coin | Address |
+|-|-|
+| LTC | LWpuHQUGw3qZg8MCHYGgTPRZ3a1i8jc5u3 |
+| BTC | bc1qw0t40dunylgtz9kgfylwxac3a8vwp70cgrga5r |
+| SOL | up9YvW6ewNati5fmmDjGHzFbq8UkSbHPccoDNzijk3G |
+| POL | 0x5198f52fA768294ae66f0cB75A98DCc895a36F2E |
+| DOGE | DJAg2fTzS5vN3yXDPn5gGPz9JSmzJn3cXD |
+| VRSC | RXPo4WbNn6x494HL2MAHxD6eNvj6JqVKBU |
