@@ -185,7 +185,8 @@ module.exports = function(logger){
                 if (!data.blockOnlyPBaaS) {
                     logger.debug(logSystem, logComponent, logSubCat, 'Block found: ' + data.blockHash + ' [' + data.height + '] by ' + data.worker);
                 } else {
-                    logger.debug(logSystem, logComponent, logSubCat, 'PBaaS found: ' + data.blockHash + ' by ' + data.worker);
+                    var chains = (data.pbaasChainMatches && data.pbaasChainMatches.length) ? data.pbaasChainMatches.join(', ') : 'unknown';
+                    logger.debug(logSystem, logComponent, logSubCat, 'PBaaS found [' + chains + ']: ' + data.blockHash + ' by ' + data.worker);
                 }
             if (isValidShare) {
                 if(data.shareDiff > 1000000000) {

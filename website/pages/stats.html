@@ -183,6 +183,23 @@
         {{blockscomb.push(block);}}
             {{ } }}
             {{ } }}
+
+            {{ if (it.stats.pools[pool].pbaas && it.stats.pools[pool].pbaas.blocks && it.stats.pools[pool].pbaas.blocks.length > 0) { }}
+            <div style="margin-top: 12px; margin-bottom: 4px;"><strong>PBaaS Chain Blocks Found</strong></div>
+            {{ for(var b in it.stats.pools[pool].pbaas.blocks) { }}
+            {{ var pblock = it.stats.pools[pool].pbaas.blocks[b].split(":"); }}
+                <div style="margin-bottom: 9px; background-color: #e8f0ff; min-width:600px;"><i class="fa fa-link"></i>
+                    <small>Chain:</small> <strong>{{=pblock[1]}}</strong>
+                    <span style="padding-left: 18px;"><small>Hash: {{=pblock[0].substring(0,16)}}...</small></span>
+                    {{ if (pblock[3] != null) { }}
+                    <span style="padding-left: 18px;"><small>{{=readableDate(pblock[3])}}</small></span>
+                    {{ } }}
+                    <span style="float:right; color: blue;"><small>*PBAAS*</small></span>
+                    <div><i class="fa fa-gavel"></i><small>Mined By:</small> <a href="/workers/{{=pblock[2].split('.')[0]}}">{{=pblock[2]}}</a></div>
+                </div>
+            {{ } }}
+            {{ } }}
+
       <!--{{=JSON.stringify(blockscomb)}}-->
       <script>
       var blockscomb = ({{=JSON.stringify(blockscomb)}})

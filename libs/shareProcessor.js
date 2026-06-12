@@ -86,8 +86,13 @@ module.exports = function(logger, poolConfig){
         redisCommands.push(['zadd', coin + ':hashrate', dateNow / 1000 | 0, hashrateData.join(':')]);
 
         if (isValidBlock){
-            // track potential pbaas blocks ( need lookup and processing )
-            redisCommands.push(['sadd', coin + ':pbaasPending', [shareData.blockHash, shareData.worker, dateNow].join(':')]);
+            if (shareData.blockOnlyPBaaS) {
+                // one entry per matching PBaaS chain: blockHash:chainName:worker:timestamp
+                var matchedChains = (shareData.pbaasChainMatches && shareData.pbaasChainMatches.length) ? shareData.pbaasChainMatches : ['unknown'];
+                matchedChains.forEach(function(chainName) {
+                    redisCommands.push(['sadd', coin + ':pbaasPending', [shareData.blockHash, chainName, shareData.worker, dateNow].join(':')]);
+                });
+            }
             // track main chain blocks
             if (!shareData.blockOnlyPBaaS) {        
                 redisCommands.push(['rename', coin + ':shares:roundCurrent', coin + ':shares:round' + shareData.height]);

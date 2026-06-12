@@ -379,6 +379,7 @@ module.exports = function(logger, portalConfig, poolConfigs){
                 ['scard', ':blocksKicked'],
 				['smembers', ':blocksPending'],
 				['smembers', ':blocksConfirmed'],
+                ['smembers', ':pbaasPending'],
 				['hgetall', ':shares:roundCurrent'],
                 ['hgetall', ':blocksPendingConfirms'],
                 ['zrange', ':payments', -100, -1],
@@ -437,22 +438,26 @@ module.exports = function(logger, portalConfig, poolConfigs){
                             /* show all pending blocks */
 							pending: {
 								blocks: replies[i + 6].sort(sortBlocks),
-                                confirms: (replies[i + 9] || {})
+                                confirms: (replies[i + 10] || {})
 							},
                             /* show last 50 found blocks */
 							confirmed: {
 								blocks: replies[i + 7].sort(sortBlocks).slice(0,50)
 							},
+                            /* show PBaaS chain blocks */
+                            pbaas: {
+                                blocks: (replies[i + 8] || []).sort(sortBlocks)
+                            },
                             payments: [],
-							currentRoundShares: (replies[i + 8] || {}),
-                            currentRoundTimes: (replies[i + 11] || {}),
+							currentRoundShares: (replies[i + 9] || {}),
+                            currentRoundTimes: (replies[i + 12] || {}),
                             maxRoundTime: 0,
                             shareCount: 0
                         };
-                        for(var j = replies[i + 10].length; j > 0; j--){
+                        for(var j = replies[i + 11].length; j > 0; j--){
                             var jsonObj;
                             try {
-                                jsonObj = JSON.parse(replies[i + 10][j-1]);
+                                jsonObj = JSON.parse(replies[i + 11][j-1]);
                             } catch(e) {
                                 jsonObj = null;
                             }
