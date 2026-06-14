@@ -4,6 +4,7 @@ services:
   site:
     build:
       context: .
+    restart: unless-stopped
     working_dir: /site
     ports:
       - "8080:8080"
@@ -20,6 +21,7 @@ services:
 
   redis:
     image: redis:latest
+    restart: unless-stopped
     volumes:
       - redis-data:/data
 

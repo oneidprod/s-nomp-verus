@@ -1,4 +1,5 @@
 var zlib = require('zlib');
+var http = require('http');
 
 var redis = require('redis');
 var async = require('async');
@@ -6,6 +7,40 @@ var async = require('async');
 var os = require('os');
 
 var algos = require('stratum-pool/lib/algoProperties.js');
+
+function fetchPbaasInfo(chain, callback) {
+    var auth = Buffer.from(chain.user + ':' + chain.password).toString('base64');
+    var body = JSON.stringify({jsonrpc:'1.0', id:1, method:'getmininginfo', params:[]});
+    var req = http.request({
+        hostname: chain.host, port: chain.port,
+        method: 'POST', path: '/',
+        headers: {'Content-Type': 'text/plain', 'Authorization': 'Basic ' + auth, 'Content-Length': Buffer.byteLength(body)}
+    }, function(res) {
+        var data = '';
+        res.on('data', function(d) { data += d; });
+        res.on('end', function() {
+            try {
+                var result = JSON.parse(data).result || {};
+                var sols = result.networkhashps || 0;
+                var solsStr = sols <= 0 ? '0 H/s' :
+                    sols < 1e6 ? (sols/1e3).toFixed(2) + ' KH/s' :
+                    sols < 1e9 ? (sols/1e6).toFixed(2) + ' MH/s' :
+                    sols < 1e12 ? (sols/1e9).toFixed(2) + ' GH/s' :
+                    (sols/1e12).toFixed(2) + ' TH/s';
+                callback(null, {
+                    networkBlocks: result.blocks || 0,
+                    networkSols: sols,
+                    networkSolsString: solsStr,
+                    networkDiff: (result.difficulty || 0).toFixed(0)
+                });
+            } catch(e) { callback(null, {}); }
+        });
+    });
+    req.setTimeout(3000, function() { req.destroy(); callback(null, {}); });
+    req.on('error', function() { callback(null, {}); });
+    req.write(body);
+    req.end();
+}
 
 // redis callback Ready check failed bypass trick
 function rediscreateClient(port, host, pass) {
@@ -676,6 +711,29 @@ module.exports = function(logger, portalConfig, poolConfigs){
                 algoStats.hashrateString = _this.getReadableHashRateString(algoStats.hashrate);
             });
 
+            // Fetch PBaaS chain network stats and attach to pool stats
+            var pbaasTasks = {};
+            Object.keys(poolConfigs).forEach(function(coinName) {
+                var chains = poolConfigs[coinName].pbaasChains;
+                if (!chains || !chains.length) return;
+                chains.forEach(function(chain) {
+                    (function(c, cn) {
+                        pbaasTasks[cn + '|' + c.name] = function(cb) {
+                            fetchPbaasInfo(c, function(err, info) {
+                                cb(null, { coinName: cn, chainName: c.name, info: info || {} });
+                            });
+                        };
+                    })(chain, coinName);
+                });
+            });
+            async.parallel(pbaasTasks, function(err, pbaasResults) {
+                Object.keys(pbaasResults || {}).forEach(function(key) {
+                    var r = pbaasResults[key];
+                    if (!portalStats.pools[r.coinName]) return;
+                    if (!portalStats.pools[r.coinName].pbaasChainStats) portalStats.pools[r.coinName].pbaasChainStats = [];
+                    portalStats.pools[r.coinName].pbaasChainStats.push(Object.assign({ name: r.chainName }, r.info));
+                });
+
             _this.stats = portalStats;
             
             // save historical hashrate, not entire stats!
@@ -713,6 +771,7 @@ module.exports = function(logger, portalConfig, poolConfigs){
                     logger.error(logSystem, 'Historics', 'Error adding stats to historics ' + JSON.stringify(err));
             });
             callback();
+            }); // end async.parallel pbaas stats
         });
 
     };
@@ -781,7 +840,7 @@ module.exports = function(logger, portalConfig, poolConfigs){
 	function getReadableNetworkHashRateString(hashrate) {
 		hashrate = (hashrate * 1000000);
 		if (hashrate < 1000000)
-			return '0 Sol';
+			return '0 H/s';
 		var byteUnits = [ ' H/s', ' KH/s', ' MH/s', ' GH/s', ' TH/s', ' PH/s' ];
 		var i = Math.floor((Math.log(hashrate/1000) / Math.log(1000)) - 1);
 		hashrate = (hashrate/1000) / Math.pow(1000, i + 1);
